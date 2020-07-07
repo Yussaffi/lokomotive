@@ -22,6 +22,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
+	"github.com/kinvolk/lokomotive/pkg/components/util"
 	"github.com/kinvolk/lokomotive/pkg/install"
 	"github.com/kinvolk/lokomotive/pkg/k8sutil"
 	"github.com/kinvolk/lokomotive/pkg/lokomotive"
@@ -105,6 +106,10 @@ func runClusterApply(cmd *cobra.Command, args []string) {
 		for _, c := range releases {
 			cu.upgradeComponent(c)
 		}
+	}
+
+	if err := util.DisableAutomountServiceAccountToken("default", kubeconfigPath); err != nil {
+		ctxLogger.Fatalf("Applying patch to default service account failed: %v", err)
 	}
 
 	if skipComponents {

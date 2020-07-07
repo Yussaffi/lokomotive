@@ -16,6 +16,7 @@ package util
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 
@@ -29,6 +30,7 @@ import (
 
 	"github.com/kinvolk/lokomotive/pkg/components"
 	"github.com/kinvolk/lokomotive/pkg/k8sutil"
+	types "k8s.io/apimachinery/pkg/types"
 )
 
 func ensureNamespaceExists(name string, kubeconfigPath string) error {
@@ -53,6 +55,58 @@ func ensureNamespaceExists(name string, kubeconfigPath string) error {
 		},
 	}, metav1.CreateOptions{})
 	if err != nil && !errors.IsAlreadyExists(err) {
+		return err
+	}
+
+	return nil
+}
+
+// DisableAutomountServiceAccountToken updates default Service Account to not mount it in pods by default.
+func DisableAutomountServiceAccountToken(ns, kubeconfigPath string) error {
+	if ns == "" {
+		return fmt.Errorf("namespace name can't be empty")
+	}
+
+	kubeconfig, err := ioutil.ReadFile(kubeconfigPath) // #nosec G304
+	if err != nil {
+		return fmt.Errorf("reading kubeconfig file: %w", err)
+	}
+
+	cs, err := k8sutil.NewClientset(kubeconfig)
+	if err != nil {
+		return fmt.Errorf("creating clientset: %w", err)
+	}
+
+	payload := []patchUInt32Value{{
+		Op:    "add",
+		Path:  "/automountServiceAccountToken",
+		Value: false,
+	}}
+
+	payloadBytes, _ := json.Marshal(payload)
+
+	_, err = cs.CoreV1().ServiceAccounts(ns).Get(context.TODO(), "default", metav1.GetOptions{})
+
+	// This is fix for CI failing sometimes for `openebs-operator`
+	if err != nil && err.Error() == `serviceaccounts "default" not found` {
+		automountServiceAccountToken := false
+		_, err = cs.CoreV1().ServiceAccounts(ns).Create(context.TODO(), &v1.ServiceAccount{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "default",
+			},
+			AutomountServiceAccountToken: &automountServiceAccountToken,
+		}, metav1.CreateOptions{})
+
+		if err != nil {
+			return err
+		}
+
+		return nil
+	}
+
+	//nolint:lll
+	_, err = cs.CoreV1().ServiceAccounts(ns).Patch(context.TODO(), "default", types.JSONPatchType, payloadBytes, metav1.PatchOptions{})
+	if err != nil {
 		return err
 	}
 

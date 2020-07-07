@@ -78,3 +78,10 @@ func (n *NodeSelector) Render() (string, error) {
 
 	return string(b), nil
 }
+
+// patchUInt32Value specifies a patch operation for a uint32.
+type patchUInt32Value struct {
+	Op    string `json:"op"`
+	Path  string `json:"path"`
+	Value bool   `json:"value"`
+}

@@ -84,7 +84,12 @@ func applyComponents(lokoConfig *config.Config, kubeconfig string, componentName
 			return diags
 		}
 
-		if err := util.InstallComponent(component, kubeconfig); err != nil {
+		if err = util.InstallComponent(component, kubeconfig); err != nil {
+			return err
+		}
+
+		ns := component.Metadata().Namespace
+		if err = util.DisableAutomountServiceAccountToken(ns, kubeconfig); err != nil {
 			return err
 		}
 
