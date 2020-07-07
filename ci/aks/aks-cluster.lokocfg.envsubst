@@ -66,6 +66,10 @@ cluster "aks" {
   }
 }
 
+component "linkerd" {
+  controller_replicas = 2
+}
+
 component "prometheus-operator" {
   disable_webhooks = true
 

@@ -65,6 +65,10 @@ EOF
   oidc {}
 }
 
+component "linkerd" {
+  controller_replicas = 2
+}
+
 component "openebs-operator" {}
 
 # openebs-storage-class component should always be the last to be installed
