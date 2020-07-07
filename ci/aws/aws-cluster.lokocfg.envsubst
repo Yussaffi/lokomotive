@@ -65,9 +65,7 @@ EOF
   oidc {}
 }
 
-component "linkerd" {
-  controller_replicas = 2
-}
+component "linkerd" {}
 
 component "openebs-operator" {}
 
