@@ -81,7 +81,7 @@ prometheusResources:
 
 # proxy injector configuration
 proxyInjectorResources: *controller_resources
-webhookFailurePolicy: Ignore
+webhookFailurePolicy: Fail
 
 # service profile validator configuration
 spValidatorResources: *controller_resources
